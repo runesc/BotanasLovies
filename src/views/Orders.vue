@@ -141,20 +141,13 @@
               Pedidos de {{ seller.name }}
               <button
                 class="float-right btn btn-danger btn-round"
-                v-if="adminExists && edit"
+                v-if="adminExists"
                 v-on:click="
-                  editView = !editView;
-                  list = false;
+                  seen = true;
+                  x = false;
                 "
               >
-                <i class="tim-icons icon-pencil"></i> Editar
-              </button>
-              <button
-                class="float-right btn btn-success btn-round"
-                v-if="adminExists"
-                v-on:click="list = !list"
-              >
-                <i class="tim-icons icon-paper"></i> Añadir producto
+                <i class="tim-icons icon-minimal-left"></i> Volver
               </button>
             </h4>
           </div>
@@ -261,7 +254,7 @@ export default {
     ...mapActions(["getSellers"]),
     // Get all products in stock
     getElementsInStock() {
-      let paciente = [];
+      let elements = [];
       firebase.auth().currentUser;
       db.collection("products")
         .get()
@@ -272,7 +265,7 @@ export default {
             elements.push(element);
           });
         });
-      this.stock = paciente;
+      this.stock = elements;
     },
     // Open update form
     seeFormUpdate(id) {
