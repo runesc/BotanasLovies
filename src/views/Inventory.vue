@@ -79,7 +79,7 @@
                         edit = true;
                       "
                     >
-                      {{ item.price }}
+                      ${{ item.price }}
                     </td>
                     <td
                       v-on:click="
@@ -109,15 +109,17 @@
             <h5 class="title">Nuevo producto</h5>
           </div>
           <div class="card-body">
-            <form
+            <form id="myForm" 
               @submit.prevent="
                 addNewProduct({
                   name,
                   code,
+                  id: '',
                   description,
                   stock: inStock,
-                  category
-                })
+                  category,
+                  price
+                });
               "
             >
               <div class="row">
@@ -127,6 +129,7 @@
                     <input
                       type="text"
                       class="form-control"
+                      name="name"
                       placeholder="Nombre del producto"
                       v-model="name"
                     />
@@ -138,6 +141,7 @@
                     <input
                       type="number"
                       class="form-control"
+                      name="code"
                       placeholder="Codigo del producto"
                       v-model="code"
                     />
@@ -181,12 +185,26 @@
                   </select>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-md-4 pr-md-1">
+                  <div class="form group">
+                    <label>Precio</label>
+                   <input
+                      type="text"
+                      class="form-control"
+                      placeholder="Precio del producto"
+                      v-model="price"
+                    />
+                  </div>
+                </div>
+              </div>              
               <div class="card-footer">
                 <button
                   type="submit"
                   class="btn btn-fill btn-success float-right"
                 >
                   Agregar
+
                 </button>
               </div>
             </form>
@@ -200,7 +218,7 @@
           <div class="float-right">
             <button
               class="btn btn-fill btn-success"
-              v-on:click="router.push({ name: 'home' })"
+              v-on:click="editView = !editView; list = true"
             >
               Volver
             </button>
@@ -220,7 +238,8 @@
                   stock: inStock,
                   add,
                   remove,
-                  id: productStock.id
+                  id: productStock.id,
+                  price
                 })
               "
             >
@@ -274,6 +293,17 @@
                     <input type="hidden" v-model="productStock.id" />
                   </div>
                 </div>
+                <div class="col-md-3 px-md-1">
+                  <div class="form-group">
+                    <label>precio</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      :placeholder="productStock.price"
+                      v-model="price"
+                    />
+                  </div>
+                </div>                
               </div>
               <div class="card-footer">
                 <button

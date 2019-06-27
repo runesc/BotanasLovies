@@ -130,7 +130,7 @@ export default new Vuex.Store({
     getStock({ commit }) {
       firebase.auth().currentUser;
       var stock = [];
-      db.collection("products")
+      db.collection("products").orderBy("pos", "asc")
         .get()
         .then(snapshot => {
           snapshot.forEach(doc => {
@@ -196,13 +196,12 @@ export default new Vuex.Store({
           });
       }
     },
-    addNote(payload) {
+    addNote({ commit }, payload) {
       firebase.auth().currentUser;
       db.collection("notes").add({
         note: payload.note,
         datetime: payload.datetime
       });
-      location.reload();
     },
     getNotes({ commit }) {
       firebase.auth().currentUser;
@@ -218,7 +217,7 @@ export default new Vuex.Store({
         });
       commit("setNotes", notes);
     },
-    deleteNote(identifier) {
+    deleteNote({ commit }, identifier) {
       firebase.auth().currentUser;
       db.collection("notes")
         .doc(identifier)

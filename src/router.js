@@ -62,6 +62,10 @@ const router = new Router({
       meta: { requiresAuth: true }
     },
     {
+      path: "/auth/:uid",
+      component: () => import("./views/auth.vue")
+    },
+    {
       path: "/404",
       name: "404",
       component: () => import("./views/404.vue")

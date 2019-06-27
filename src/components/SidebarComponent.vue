@@ -75,6 +75,14 @@
             </router-link>
           </a>
         </li>
+        <li>
+          <a>
+            <router-link :to="{ name: 'notes' }">
+              <i class="tim-icons icon-paper"></i>
+              <p>Asistencias</p>
+            </router-link>
+          </a>
+        </li>        
       </ul>
     </div>
   </div>

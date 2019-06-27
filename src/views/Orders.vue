@@ -1,22 +1,15 @@
 <template>
   <div class="content">
     <div class="row">
-      <div class="col-lg-12 col-md-12" v-if="seen">
+      <div class="col-lg-12 col-md-12" v-if="mainView">
         <div class="card ">
           <div class="card-header">
             <h4 class="card-title">
               Vendedores
               <button
-                class="float-right btn btn-danger btn-round"
-                v-on:click="edit = !edit"
-                v-if="adminExists"
-              >
-                <i class="tim-icons icon-pencil"></i> Editar
-              </button>
-              <button
-                class="float-right btn btn-success btn-round"
+                class="float-right btn btn-success"
                 v-if="seller"
-                v-on:click="seen = !seen"
+                v-on:click="mainView = !mainView; newOrderView = true"
               >
                 <i class="tim-icons icon-paper"></i> Nuevo pedido
               </button>
@@ -39,12 +32,14 @@
                     <td
                       v-if="adminExists"
                       v-on:click="
-                        x = true;
-                        seen = false;
+                        mainView = !mainView;
+                        ordersBySellerAndDate = true;
+                        newOrderView = false
                         seller = item;
+                        getOrdersBySellerAndDate(seller);
                       "
                     >
-                      (Ver pedidos)
+                      <button class="btn btn-warning">Ver pedidos</button>
                     </td>
                   </tr>
                 </tbody>
@@ -54,7 +49,7 @@
         </div>
       </div>
       <!--Nuevo pedido-->
-      <div class="col-lg-12 col-md-12" v-if="seen === false && x === false">
+      <div class="col-lg-12 col-md-12" v-if="mainView === false && newOrderView === true">
         <!-- Formulario para añadir stock -->
         <div class="card">
           <div class="card-header">
@@ -62,7 +57,7 @@
               Nuevo pedido
               <button
                 class="float-right btn btn-danger"
-                v-on:click="seen = !seen"
+                v-on:click="mainView = !mainView"
               >
                 Cancelar
               </button>
@@ -86,7 +81,7 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.code }}</td>
                     <td>{{ item.description }}</td>
-                    <td class="text-center">{{ item.price }}</td>
+                    <td class="text-center">${{ item.price }}</td>
                     <td class="text-center">
                       <span v-if="formActualizar && idActualizar == index">
                         <!-- Formulario para actualizar -->
@@ -122,29 +117,30 @@
                 </tbody>
               </table>
               <hr />
-              <h3>Total: ${{ total }}</h3>
               <button
                 v-on:click="uploadChanges"
                 class="btn btn-success float-right"
               >
                 Guadar pedido
               </button>
+              <button class="btn btn-danger float-right"v-on:click="refresh">Terminar y volver</button>
             </div>
           </div>
         </div>
       </div>
-      <!--Pedidos realizados por vendedor-->
-      <div class="col-lg-12 co-md-12" v-if="x">
+      <!--Pedidos realizados por el vendedor por fecha-->
+      {{ processData(toFilter) }}
+      <div class="col-lg-12 co-md-12" v-if="mainView === false && ordersBySellerAndDate === true">
         <div class="card ">
           <div class="card-header">
             <h4 class="card-title">
               Pedidos de {{ seller.name }}
               <button
-                class="float-right btn btn-danger btn-round"
+                class="float-right btn btn-danger"
                 v-if="adminExists"
                 v-on:click="
-                  seen = true;
-                  x = false;
+                  mainView = !mainView;
+                  ordersBySellerAndDate = false;
                 "
               >
                 <i class="tim-icons icon-minimal-left"></i> Volver
@@ -156,66 +152,75 @@
               <table class="table tablesorter" id="">
                 <thead class=" text-primary">
                   <tr>
-                    <th>Nombre</th>
-                    <th>Codigo</th>
-                    <th>Descripción</th>
-                    <th>Cantidad</th>
-                    <th class="text-center">Precio</th>
-                    <th>Categoría</th>
+                    <th>Numero de pedido</th>
+                    <th>Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in stock" :key="item.id">
-                    <td
-                      v-on:click="
-                        productStock = item;
-                        edit = true;
-                      "
-                    >
-                      {{ item.name }}
+                  <tr v-for="item in processedData" :key="item.id">
+                    <td v-on:click="ordersBySellerAndDate = false; orderByDay = true; getOrderBySeller(seller, item.orderID, item.datetime);
+                    ">
+                      {{ item.orderID }}
                     </td>
-                    <td
-                      v-on:click="
-                        productStock = item;
-                        edit = true;
-                      "
-                    >
-                      {{ item.code }}
-                    </td>
-                    <td
-                      v-on:click="
-                        productStock = item;
-                        edit = true;
-                      "
-                    >
-                      {{ item.description }}
-                    </td>
-                    <td
-                      v-on:click="
-                        productStock = item;
-                        edit = true;
-                      "
-                    >
-                      {{ item.stock }}
-                    </td>
-                    <td
-                      class="text-center"
-                      v-on:click="
-                        productStock = item;
-                        edit = true;
-                      "
-                    >
-                      {{ item.price }}
-                    </td>
-                    <td
-                      v-on:click="
-                        productStock = item;
-                        edit = true;
-                      "
-                    >
-                      {{ item.category }}
+                    <td v-on:click="ordersBySellerAndDate = false; orderByDay = true; getOrderBySeller(seller, item.orderID, item.datetime);
+                    ">
+                      {{
+                        new Date(
+                          item.datetime.seconds * 1000 +
+                            item.datetime.nanoseconds / 1000000
+                        ).toLocaleString("es-MX", {
+                          month: "numeric",
+                          day: "numeric",
+                          year: "numeric"
+                        }) +
+                          " a las: " +
+                          new Date(
+                            item.datetime.seconds * 1000 +
+                              item.datetime.nanoseconds / 1000000
+                          ).toLocaleString("es-MX", {
+                            hour: "numeric",
+                            minute: "numeric",
+                            hour12: true
+                          })
+                      }}
                     </td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--Pedido realizado por el usuario X el día Y a la hora Z-->
+      <div class="col-lg-12 col-md-12" v-if="mainView === false && orderByDay === true">
+        <div class="card ">
+          <div class="card-header">
+            <h4 class="card-title">          
+              Orden de {{seller.name}} del día {{orderDatetime}}
+              <button
+                class="float-right btn btn-danger" v-on:click="ordersBySellerAndDate = true; orderByDay = false">
+                <i class="tim-icons icon-minimal-left"></i> Volver
+              </button>
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="">
+              <table class="table tablesorter" id="">
+                <thead class=" text-primary">
+                  <tr>
+                    <th>Nombre del producto</th>
+                    <th>Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                  <tr v-for="item in itemsInOrderByDay" :key="item.id">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.itemQuantity }}</td>
+                  </tr>
+                <tr>
+                  <td><h3>Total: ${{getTotal()}}</h3></td>
+                </tr>
                 </tbody>
               </table>
             </div>
@@ -233,17 +238,25 @@ export default {
   name: "orders",
   data() {
     return {
-      seen: true,
-      edit: false,
-      modal: false,
-      x: false,
-      seller: "",
+      mainView: true, // enable main view
+      newOrderView: false,
+      ordersBySellerAndDate: false,
+      orderByDay: false,
+      x: 0, // enable new order
+      seller: "", // seller info here
       stock: [], // here are all products
       inOrder: [], // save here all orders
-      formActualizar: true,
-      idActualizar: -1,
-      updateQuantity: "",
-      total: 0
+      formActualizar: true, // enable edit form
+      idActualizar: -1, // id del item seleccionado
+      updateQuantity: "", // save items quantity
+      total: 0, // order total
+      orderID: Math.random()
+        .toString(26)
+        .substring(2), // order id
+      toFilter: [],
+      processedData: [],
+      orderDatetime: '',
+      itemsInOrderByDay: [],
     };
   },
   computed: {
@@ -256,7 +269,7 @@ export default {
     getElementsInStock() {
       let elements = [];
       firebase.auth().currentUser;
-      db.collection("products")
+      db.collection("products").orderBy("pos", "asc")
         .get()
         .then(snapshot => {
           snapshot.forEach(doc => {
@@ -275,39 +288,88 @@ export default {
     },
     // if click save button remember data
     saveUpdate(identifier) {
+      // Update quantity and push it in inOrder
       this.formActualizar = false;
       this.stock[identifier].quantity = this.updateQuantity;
-      //this.total += Number(this.stock[identifier]["price"] *  this.updateQuantity)
-      // Save changes on inOrder
-      this.inOrder.push({
-        name: this.stock[identifier]["name"],
-        itemID: this.stock[identifier]["id"],
-        price: this.stock[identifier]["price"],
-        itemQuantity: this.stock[identifier]["quantity"],
-        sellerID: this.seller["id"],
-        sellerName: this.seller["name"],
-        datetime: new Date()
-      });
+      this.inOrder.push(this.stock[identifier]); // sa
     },
-    // Upload data to firebase
+    // check if values are repeated and if so, update every one of them and finaly load the data into firebase
     uploadChanges() {
-      firebase.auth().currentUser;
-      const seller = this.seller["id"];
-      let randomID = Math.random()
-        .toString(26)
-        .substring(2);
-      // Get each item and check for equal items
-      this.inOrder.forEach(function(element) {
-        // TEST -> ID del vendedor -> ID pedido (cosnt random) > Lista de items (Random) > datos
-        db.collection("orders")
-          .doc(seller)
-          .collection(randomID)
-          .doc(element.itemID)
-          .set(element)
-          .then(function() {
-            location.reload();
-          });
+      var sellerID = this.seller.id;
+      var orderID = this.orderID;
+      var grades = {};
+      this.inOrder.forEach(function(item) {
+        var grade = (grades[item.id] = grades[item.id] || {});
+        grade["name"] = item.name;
+        grade["itemID"] = item.id;
+        grade["price"] = item.price;
+        grade["itemQuantity"] = item.quantity;
+        grade["seller"] = sellerID;
+        grade["datetime"] = new Date();
+        grade["orderID"] = orderID;
       });
+
+      // Iterate grades and upload to firebase
+      for (var x in grades) {
+        db.collection("orders")
+          .doc()
+          .set(grades[x]);
+      }
+    },
+    // Get all sells from firebase (for X seller)
+    getOrdersBySellerAndDate(sellerInfo) {
+      firebase.auth().currentUser;
+      let orders = [];
+      db.collection("orders")
+        .where("seller", "==", sellerInfo.id).orderBy("datetime", "desc")
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            let item = doc.data();
+            item.id = doc.id;
+            orders.push(item);
+          });
+        });
+      this.toFilter = orders;
+    },
+    processData(data_) {
+      var processedData = [];
+      var grades = {};
+      data_.forEach(function(item) {
+        var grade = (grades[item.orderID] = grades[item.orderID] || {});
+        grade["orderID"] = item.orderID;
+        grade["datetime"] = item.datetime;
+      });
+
+      // Iterate grades and upload to firebase
+      for (var x in grades) {
+        processedData.push(grades[x]);
+      }
+      this.processedData = processedData;
+    },
+    getOrderBySeller(seller, orderID, datetime){
+      let itemInOrder = [];
+      this.orderDatetime = new Date(datetime.seconds * 1000 + datetime.nanoseconds / 1000000).toLocaleString("es-MX", {month: "numeric",day: "numeric",year: "numeric"})
+      db.collection("orders").where("orderID", "==", orderID)
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            let item = doc.data();
+            item.id = doc.id;
+            itemInOrder.push(item)
+          });
+        });
+        this.itemsInOrderByDay = itemInOrder;
+    },
+    getTotal(){
+      var total = 0;
+      for (var x in this.itemsInOrderByDay){
+      total += parseFloat(parseFloat(this.itemsInOrderByDay[x].price * parseInt(this.itemsInOrderByDay[x].itemQuantity)).toFixed(2))
+     }
+     return parseFloat(total).toFixed(2);
+    },
+    refresh(){
+      window.location.reload()
     }
   },
   // On init run these methods

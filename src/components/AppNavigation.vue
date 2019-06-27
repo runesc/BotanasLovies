@@ -1,6 +1,5 @@
 <template>
   <div class="noclass" v-if="userExists">
-    <span class="text-white">You´re in: {{ userInfo.role }} mode.</span>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-absolute navbar-transparent">
       <div class="container-fluid">
